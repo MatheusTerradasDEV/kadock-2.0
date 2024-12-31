@@ -3,6 +3,7 @@ import { Bell, LogOut } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { auth } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
+import logo from './inventory/logokadock.png';
 
 export default function Navbar() {
   const { user } = useAuthStore();
@@ -18,10 +19,10 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-sm">
       <div className="max-w-7x5 mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
+        <div className="flex justify-between h-20 items-center">
+          <div className="flex items-end"> 
             <Link to="/" className="text-xl font-bold text-gray-800">
-              Kadock estoque
+              <img src={logo} alt="Kadock estoque" className="h-16 w-auto" />
             </Link>
           </div>
           <div className="flex items-center space-x-4">
