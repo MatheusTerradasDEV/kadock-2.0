@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
+import LowStock from './pages/LowStock';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/low-stock" element={<LowStock />} />
           </Route>
         </Route>
       </Routes>

@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { Fabric } from '../types';
 import AddFabricModal from '../components/inventory/AddFabricModal';
 import EditFabricModal from '../components/inventory/EditFabricModal';
+import SearchAndFilter from '../components/shared/searchAndFilter';
 
 export default function Inventory() {
   const [fabrics, setFabrics] = useState<Fabric[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingFabric, setEditingFabric] = useState<Fabric | null>(null);
 
@@ -43,10 +45,12 @@ export default function Inventory() {
     }
   };
 
-  const filteredFabrics = fabrics.filter(fabric =>
-    fabric.name.toLowerCase().includes(search.toLowerCase()) ||
-    fabric.type.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredFabrics = fabrics.filter(fabric => {
+    const matchesSearch = fabric.name.toLowerCase().includes(search.toLowerCase()) ||
+      fabric.type.toLowerCase().includes(search.toLowerCase());
+    const matchesType = !selectedType || fabric.type === selectedType;
+    return matchesSearch && matchesType;
+  });
 
   return (
     <div className="space-y-6">
@@ -54,21 +58,17 @@ export default function Inventory() {
         <h1 className="text-2xl font-bold">Inventário</h1>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="h-5 w-5 mr-2" />
           Adicionar Tecido
         </button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-        <input
-          type="text"
-          placeholder="Buscar tecidos..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      <div className="mb-6">
+        <SearchAndFilter
+          onSearch={setSearch}
+          onTypeSelect={setSelectedType}
         />
       </div>
 
@@ -101,7 +101,7 @@ export default function Inventory() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredFabrics.map((fabric) => (
-              <tr key={fabric.id}>
+              <tr key={fabric.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">{fabric.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{fabric.type}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
