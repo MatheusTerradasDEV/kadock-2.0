@@ -13,6 +13,8 @@ export interface Fabric {
   id: string;
   name: string;
   type: string;
+  subType: string;
+  supplier: string;
   color: string;
   price: number;
   quantity: number;

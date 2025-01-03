@@ -49,8 +49,7 @@ export default function LowStock() {
       <div className="mb-6">
         <SearchAndFilter
           onSearch={setSearch}
-          onTypeSelect={setSelectedType}
-        />
+          onTypeSelect={setSelectedType} categories={{}} selectedType={null} selectedSubType={null}        />
       </div>
       
       <div className="grid gap-4">

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { Fabric } from '../../types';
-import { ArrowRight } from 'lucide-react';
 
 interface LowStockListProps {
   fabrics: Fabric[];

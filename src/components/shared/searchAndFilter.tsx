@@ -6,11 +6,21 @@ import { db } from '../../lib/firebase';
 interface SearchAndFilterProps {
   onSearch: (value: string) => void;
   onTypeSelect: (type: string | null) => void;
+  onSubTypeSelect: (subType: string | null) => void; // Adicionado
+  categories: { [key: string]: string[] };
+  selectedType: string | null;
+  selectedSubType: string | null;
 }
 
-export default function SearchAndFilter({ onSearch, onTypeSelect }: SearchAndFilterProps) {
-  const [types, setTypes] = useState<string[]>([]);
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+export default function SearchAndFilter({
+  onSearch,
+  onTypeSelect,
+  onSubTypeSelect, // Adicionado
+  categories,
+  selectedType,
+  selectedSubType,
+}: SearchAndFilterProps) {
+  const [, setTypes] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
@@ -18,7 +28,7 @@ export default function SearchAndFilter({ onSearch, onTypeSelect }: SearchAndFil
       const q = query(collection(db, 'fabrics'));
       const snapshot = await getDocs(q);
       const uniqueTypes = new Set(
-        snapshot.docs.map(doc => doc.data().type as string)
+        snapshot.docs.map((doc) => doc.data().type as string)
       );
       setTypes(Array.from(uniqueTypes).sort());
     };
@@ -27,8 +37,13 @@ export default function SearchAndFilter({ onSearch, onTypeSelect }: SearchAndFil
   }, []);
 
   const handleTypeSelect = (type: string | null) => {
-    setSelectedType(type);
     onTypeSelect(type);
+    onSubTypeSelect(null); // Reset subtipo ao selecionar tipo
+    setIsFilterOpen(false);
+  };
+
+  const handleSubTypeSelect = (subType: string | null) => {
+    onSubTypeSelect(subType);
     setIsFilterOpen(false);
   };
 
@@ -43,7 +58,7 @@ export default function SearchAndFilter({ onSearch, onTypeSelect }: SearchAndFil
           className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
-      
+
       <div className="relative">
         <button
           onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -51,7 +66,11 @@ export default function SearchAndFilter({ onSearch, onTypeSelect }: SearchAndFil
             selectedType ? 'border-blue-500 text-blue-600' : 'border-gray-200'
           } rounded-lg shadow-sm hover:bg-gray-50 transition-colors`}
         >
-          <Filter className={`h-5 w-5 mr-2 ${selectedType ? 'text-blue-500' : 'text-gray-400'}`} />
+          <Filter
+            className={`h-5 w-5 mr-2 ${
+              selectedType ? 'text-blue-500' : 'text-gray-400'
+            }`}
+          />
           <span className="font-medium">
             {selectedType || 'Filtrar por tipo'}
           </span>
@@ -67,16 +86,23 @@ export default function SearchAndFilter({ onSearch, onTypeSelect }: SearchAndFil
             >
               Todos os tipos
             </button>
-            {types.map(type => (
-              <button
-                key={type}
-                onClick={() => handleTypeSelect(type)}
-                className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
-                  selectedType === type ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
-                }`}
-              >
-                {type}
-              </button>
+            {Object.keys(categories).map((category) => (
+              <div key={category}>
+                <h3 className="px-4 py-2 font-medium">{category}</h3>
+                {categories[category].map((subCategory) => (
+                  <button
+                    key={subCategory}
+                    onClick={() => handleSubTypeSelect(subCategory)}
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
+                      selectedSubType === subCategory
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-gray-700'
+                    }`}
+                  >
+                    {subCategory}
+                  </button>
+                ))}
+              </div>
             ))}
           </div>
         )}

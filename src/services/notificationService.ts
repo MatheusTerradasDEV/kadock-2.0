@@ -18,7 +18,7 @@ export async function createNotification(userId: string, message: string, type: 
 }
 
 export async function handleLowStockNotification(fabricName: string, quantity: number, user: User) {
-  const message = `Low stock alert: ${fabricName} has only ${quantity} units remaining`;
+  const message = `Estoque Baixo: ${fabricName} está com ${quantity} reabasteça`;
   
   if (user.notificationPreferences.inApp) {
     await createNotification(user.id, message, 'low_stock');

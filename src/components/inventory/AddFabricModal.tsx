@@ -4,17 +4,22 @@ import { X } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { useAuthStore } from '../../store/authStore';
 import { handleLowStockNotification } from '../../services/notificationService';
+import { FABRIC_CATEGORIES, MainCategory } from '../constants/categories';
+import { toast } from 'react-hot-toast';
 
 interface AddFabricModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  initialCategory?: string | null;
 }
 
-export default function AddFabricModal({ onClose, onSuccess }: AddFabricModalProps) {
+export default function AddFabricModal({ onClose, onSuccess, initialCategory }: AddFabricModalProps) {
   const { user } = useAuthStore();
   const [formData, setFormData] = useState({
     name: '',
-    type: '',
+    type: initialCategory || '',
+    subType: '',
+    supplier: '',
     color: '#000000',
     price: '',
     quantity: '',
@@ -27,10 +32,14 @@ export default function AddFabricModal({ onClose, onSuccess }: AddFabricModalPro
 
     try {
       const newFabric = {
-        ...formData,
-        price: Number(formData.price),
-        quantity: Number(formData.quantity),
-        minQuantity: Number(formData.minQuantity),
+        name: formData.name,
+        type: formData.type,
+        subType: formData.subType,
+        supplier: formData.supplier,
+        color: formData.color,
+        price: parseFloat(formData.price),
+        quantity: parseInt(formData.quantity),
+        minQuantity: parseInt(formData.minQuantity),
         createdAt: new Date(),
         updatedAt: new Date(),
         createdBy: user.id,
@@ -39,52 +48,87 @@ export default function AddFabricModal({ onClose, onSuccess }: AddFabricModalPro
 
       await addDoc(collection(db, 'fabrics'), newFabric);
 
-      // Check if initial stock is low
-      if (Number(formData.quantity) <= Number(formData.minQuantity)) {
-        await handleLowStockNotification(formData.name, Number(formData.quantity), user);
+      if (newFabric.quantity <= newFabric.minQuantity) {
+        await handleLowStockNotification(newFabric.name, newFabric.quantity, user);
       }
 
+      toast.success('Tecido adicionado com sucesso!');
       onSuccess();
     } catch (error) {
       console.error('Error adding fabric:', error);
+      toast.error('Erro ao adicionar tecido');
     }
   };
 
+  const availableSubTypes = formData.type ? FABRIC_CATEGORIES[formData.type as MainCategory] : [];
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6">
+      <div className="bg-white dark:bg-white rounded-lg max-w-md w-full p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Adicionar Tecido</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <h2 className="text-xl font-semibold dark:text-gray-500">Adicionar Tecido</h2>
+          <button onClick={onClose} className="text-gray-500 dark:text-gray-500 hover:text-gray-200 dark:hover:text-gray-300">
             <X className="h-6 w-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Nome</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-500">Nome</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-white dark:text-black shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Tipo</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-500">Categoria</label>
+            <select
+              required
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value, subType: '' })}
+             className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-white dark:text-black shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              <option value="">Selecione uma categoria</option>
+              {Object.keys(FABRIC_CATEGORIES).map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </div>
+
+          {formData.type && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-500">Subcategoria</label>
+              <select
+                required
+                value={formData.subType}
+                onChange={(e) => setFormData({ ...formData, subType: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-white dark:text-black shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Selecione uma subcategoria</option>
+                {availableSubTypes.map((subType) => (
+                  <option key={subType} value={subType}>{subType}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-500">Fornecedor</label>
             <input
               type="text"
               required
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              value={formData.supplier}
+              onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-white dark:text-black shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Cor</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-500">Cor</label>
             <input
               type="color"
               required
@@ -95,7 +139,7 @@ export default function AddFabricModal({ onClose, onSuccess }: AddFabricModalPro
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Preço</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-500">Preço</label>
             <input
               type="number"
               required
@@ -103,31 +147,31 @@ export default function AddFabricModal({ onClose, onSuccess }: AddFabricModalPro
               step="0.01"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-white dark:text-black shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Quantidade</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-500">Quantidade</label>
             <input
               type="number"
               required
               min="0"
               value={formData.quantity}
               onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-white dark:text-black shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Quantidade Mínima</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-500">Quantidade Mínima</label>
             <input
               type="number"
               required
               min="0"
               value={formData.minQuantity}
               onChange={(e) => setFormData({ ...formData, minQuantity: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-white dark:text-black shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
 
@@ -135,7 +179,7 @@ export default function AddFabricModal({ onClose, onSuccess }: AddFabricModalPro
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-500"
             >
               Cancelar
             </button>
